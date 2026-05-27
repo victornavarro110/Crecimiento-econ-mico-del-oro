@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard Financiero del Oro</title>
+
+    <!-- ============================================== -->
+    <!-- PAPAPARSE -->
+    <!-- ============================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <!-- ============================================== -->
+    <!-- PLOTLY -->
+    <!-- ============================================== -->
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- ============================================== -->
+    <!-- CSS -->
+    <!-- ============================================== -->
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+
+            background:#081224;
+
+            color:white;
+
+            font-family:Arial, Helvetica, sans-serif;
+
+            padding:40px;
+        }
+
+        h1{
+
+            color:gold;
+
+            margin-bottom:30px;
+
+            font-size:48px;
+        }
+
+        h2{
+
+            margin-bottom:20px;
+
+            color:white;
+        }
+
+        .card{
+
+            background:#1a2436;
+
+            border-radius:15px;
+
+            padding:25px;
+
+            margin-bottom:30px;
+
+            box-shadow:0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .grid{
+
+            display:grid;
+
+            grid-template-columns:
+            repeat(auto-fit,minmax(250px,1fr));
+
+            gap:20px;
+        }
+
+        .mini-card{
+
+            background:#111827;
+
+            padding:20px;
+
+            border-radius:12px;
+
+            transition:0.3s;
+        }
+
+        .mini-card:hover{
+
+            transform:translateY(-5px);
+
+            box-shadow:0 0 20px rgba(255,215,0,0.2);
+        }
+
+        .mini-card h3{
+
+            color:gold;
+
+            margin-bottom:10px;
+        }
+
+        .grafica-box{
+
+            background:#1a2436;
+
+            border-radius:15px;
+
+            padding:25px;
+
+            margin-bottom:30px;
+
+            box-shadow:0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .explicacion{
+
+            margin-top:25px;
+
+            background:#111827;
+
+            border-left:5px solid gold;
+
+            padding:18px;
+
+            border-radius:10px;
+
+            line-height:1.7;
+
+            color:#d6d6d6;
+
+            font-size:15px;
+        }
+
+        .explicacion strong{
+
+            color:gold;
+        }
+
+        #candlestickChart{
+
+            width:100%;
+
+            height:700px;
+        }
+
+        #graficaBoxplot{
+
+            width:100%;
+
+            height:600px;
+        }
+
+        #graficaHistograma{
+
+            width:100%;
+
+            height:550px;
+        }
+
+        #graficaCorrelacion{
+
+            width:100%;
+
+            height:700px;
+        }
+
+        #graficaDrawdown{
+
+            width:100%;
+
+            height:600px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- ============================================== -->
+    <!-- TÍTULO -->
+    <!-- ============================================== -->
+
+    <h1>Dashboard Financiero del Oro</h1>
+
+    <!-- ============================================== -->
+    <!-- INFORMACIÓN GENERAL -->
+    <!-- ============================================== -->
+
+    <div class="card">
+
+        <h2>Información del Mercado</h2>
+
+        <div class="grid">
+
+            <div class="mini-card">
+
+                <h3>Registros</h3>
+
+                <p id="filas">Cargando...</p>
+
+            </div>
+
+            <div class="mini-card">
+
+                <h3>Último Precio</h3>
+
+                <p id="precio">Cargando...</p>
+
+            </div>
+
+            <div class="mini-card">
+
+                <h3>Precio Máximo</h3>
+
+                <p id="maximo">Cargando...</p>
+
+            </div>
+
+            <div class="mini-card">
+
+                <h3>Precio Mínimo</h3>
+
+                <p id="minimo">Cargando...</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VELAS JAPONESAS -->
+    <!-- ============================================== -->
+
+    <div class="grafica-box">
+
+        <h2>Velas Japonesas del Oro</h2>
+
+        <!-- ========================================== -->
+        <!-- BUSCADOR -->
+        <!-- ========================================== -->
+
+        <div style="margin-bottom:20px;">
+
+            <input
+
+                type="number"
+
+                id="busquedaYear"
+
+                placeholder="Buscar año (ejemplo: 2008)"
+
+                style="
+                padding:10px;
+                width:250px;
+                border:none;
+                border-radius:8px;
+                background:#111827;
+                color:white;
+                font-size:16px;
+                "
+
+            >
+
+            <button
+
+                onclick="buscarYear()"
+
+                style="
+                padding:10px 15px;
+                background:gold;
+                color:black;
+                border:none;
+                border-radius:8px;
+                font-weight:bold;
+                cursor:pointer;
+                margin-left:10px;
+                "
+
+            >
+
+                Buscar
+
+            </button>
+
+        </div>
+
+        <div id="candlestickChart"></div>
+
+        <div class="explicacion">
+
+            <strong>📊 Interpretación:</strong><br>
+
+            Esta gráfica muestra la evolución histórica del precio del oro utilizando velas japonesas.
+            Cada vela representa el precio de apertura, cierre, máximo y mínimo en un periodo de tiempo.
+            Las velas verdes indican incrementos de precio y las rojas disminuciones.
+            La línea azul punteada representa una predicción futura estimada utilizando la tendencia reciente del mercado.
+            Además, el buscador permite localizar eventos históricos específicos directamente sobre la gráfica.
+
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- BOXPLOT -->
+    <!-- ============================================== -->
+
+    <div class="card">
+
+        <h2>Distribución de Rendimientos por Época</h2>
+
+        <div id="graficaBoxplot"></div>
+
+        <div class="explicacion">
+
+            <strong>📦 Interpretación:</strong><br>
+
+            El boxplot compara la distribución de los rendimientos del oro en distintas etapas económicas:
+            Crisis Subprime, Recuperación y Pandemia/Inflación.
+            La gráfica permite analizar dispersión, mediana, volatilidad y valores atípicos.
+            Las diferencias observadas muestran cómo eventos históricos afectan el comportamiento financiero del oro y el riesgo del mercado.
+
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- HISTOGRAMA -->
+    <!-- ============================================== -->
+
+    <div class="card">
+
+        <h2>Campana de Distribución de Rendimientos</h2>
+
+        <div id="graficaHistograma"></div>
+
+        <div class="explicacion">
+
+            <strong>📈 Interpretación:</strong><br>
+
+            El histograma representa la distribución estadística de los rendimientos porcentuales del oro.
+            La línea amarilla indica el rendimiento promedio del mercado.
+            Esta gráfica ayuda a identificar frecuencia, volatilidad y comportamiento general de los rendimientos.
+            También permite observar si existen eventos extremos o distribuciones alejadas de la normalidad.
+
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MATRIZ DE CORRELACIÓN -->
+    <!-- ============================================== -->
+
+    <div class="card">
+
+        <h2>Matriz de Correlación del Mercado</h2>
+
+        <div id="graficaCorrelacion"></div>
+
+        <div class="explicacion">
+
+            <strong>🧠 Interpretación:</strong><br>
+
+            La matriz de correlación muestra qué tan relacionadas están las variables financieras entre sí.
+            Valores cercanos a 1 indican relaciones positivas fuertes, mientras que valores cercanos a 0 indican poca relación.
+            Este análisis permite identificar qué variables influyen más sobre el comportamiento del precio del oro y la dinámica del mercado.
+
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- DRAWDOWN -->
+    <!-- ============================================== -->
+
+    <div class="card">
+
+        <h2>Análisis de Drawdown (Riesgo Histórico)</h2>
+
+        <div id="graficaDrawdown"></div>
+
+        <div class="explicacion">
+
+            <strong>⚠️ Interpretación:</strong><br>
+
+            El drawdown representa las caídas acumuladas del precio del oro respecto a máximos históricos previos.
+            Esta métrica permite evaluar el nivel de riesgo y la magnitud de pérdidas temporales en periodos de crisis.
+            Las zonas más profundas reflejan momentos de alta incertidumbre económica y volatilidad financiera.
+
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================================== -->
+
+    <script>
+
+        const url =
+        "https://raw.githubusercontent.com/victornavarro110/Crecimiento-econ-mico-del-oro/main/XAU_clean.csv";
+
+        Papa.parse(url, {
+
+            download:true,
+
+            header:true,
+
+            complete:function(results){
+
+                const datosLimpios =
+                results.data.filter(d => d.Close);
+
+                const fechas =
+                datosLimpios.map(d => d.Date);
+
+                const open =
+                datosLimpios.map(d => parseFloat(d.Open));
+
+                const high =
+                datosLimpios.map(d => parseFloat(d.High));
+
+                const low =
+                datosLimpios.map(d => parseFloat(d.Low));
+
+                const close =
+                datosLimpios.map(d => parseFloat(d.Close));
+
+                const volume =
+                datosLimpios.map(d => parseFloat(d.Volume));
+
+                // ==========================================
+                // RENDIMIENTOS
+                // ==========================================
+
+                const rendimientos = [];
+
+                for(let i = 1; i < close.length; i++){
+
+                    const rendimiento =
+
+                    (
+                        (
+                            close[i] - close[i - 1]
+                        )
+
+                        / close[i - 1]
+                    ) * 100;
+
+                    rendimientos.push(rendimiento);
+                }
+
+                // ==========================================
+                // VOLATILIDAD
+                // ==========================================
+
+                const volatilidad = [];
+
+                for(let i = 0; i < high.length; i++){
+
+                    const vol =
+
+                    (
+                        (
+                            high[i] - low[i]
+                        )
+
+                        / low[i]
+                    ) * 100;
+
+                    volatilidad.push(vol);
+                }
+
+                // ==========================================
+                // ESTADÍSTICAS
+                // ==========================================
+
+                const ultimoPrecio =
+                close[close.length - 1];
+
+                const maximo =
+                Math.max(...close);
+
+                const minimo =
+                Math.min(...close);
+
+                document.getElementById("filas").innerHTML =
+                datosLimpios.length;
+
+                document.getElementById("precio").innerHTML =
+                "$" + ultimoPrecio.toFixed(2);
+
+                document.getElementById("maximo").innerHTML =
+                "$" + maximo.toFixed(2);
+
+                document.getElementById("minimo").innerHTML =
+                "$" + minimo.toFixed(2);
+
+                // ==========================================
+                // VELAS
+                // ==========================================
+
+                const candlestick = {
+
+                    x: fechas,
+
+                    open: open,
+
+                    high: high,
+
+                    low: low,
+
+                    close: close,
+
+                    type:'candlestick',
+
+                    increasing:{
+                        line:{
+                            color:'#00ff99'
+                        }
+                    },
+
+                    decreasing:{
+                        line:{
+                            color:'#ff4d4d'
+                        }
+                    }
+                };
+
+                const layoutCandlestick = {
+
+                    title:'Velas Japonesas del Oro',
+
+                    paper_bgcolor:'#1a2436',
+
+                    plot_bgcolor:'#1a2436',
+
+                    font:{
+                        color:'white'
+                    },
+
+                    xaxis:{
+
+                        title:'Fecha',
+
+                        rangeslider:{
+                            visible:false
+                        }
+                    },
+
+                    yaxis:{
+                        title:'Precio'
+                    }
+                };
+
+                Plotly.newPlot(
+
+                    'candlestickChart',
+
+                    [candlestick],
+
+                    layoutCandlestick
+                );
+
+                // ==========================================
+                // PREDICCIÓN
+                // ==========================================
+
+                const ultimosPrecios =
+                close.slice(-12);
+
+                const promedioCambio =
+
+                (
+                    ultimosPrecios[
+                        ultimosPrecios.length - 1
+                    ]
+
+                    -
+
+                    ultimosPrecios[0]
+                )
+
+                /
+
+                ultimosPrecios.length;
+
+                const fechasFuturas = [];
+
+                const preciosFuturos = [];
+
+                let ultimoPrecioPred =
+                close[close.length - 1];
+
+                let ultimoYear =
+
+                new Date(
+
+                    fechas[
+                        fechas.length - 1
+                    ]
+
+                ).getFullYear();
+
+                for(let i = 1; i <= 12; i++){
+
+                    ultimoPrecioPred +=
+                    promedioCambio;
+
+                    preciosFuturos.push(
+                        ultimoPrecioPred
+                    );
+
+                    fechasFuturas.push(
+
+                        `${ultimoYear + 1}-${String(i).padStart(2,'0')}-01`
+                    );
+                }
+
+                const lineaPrediccion = {
+
+                    x: fechasFuturas,
+
+                    y: preciosFuturos,
+
+                    type:'scatter',
+
+                    mode:'lines',
+
+                    name:'Predicción',
+
+                    line:{
+
+                        color:'#00E5FF',
+
+                        width:4,
+
+                        dash:'dash'
+                    }
+                };
+
+                Plotly.addTraces(
+
+                    'candlestickChart',
+
+                    lineaPrediccion
+                );
+
+                // ==========================================
+                // BUSCADOR
+                // ==========================================
+
+                window.buscarYear = function(){
+
+                    const year =
+
+                    document.getElementById(
+                        'busquedaYear'
+                    ).value;
+
+                    if(!year){
+
+                        alert("Ingresa un año");
+
+                        return;
+                    }
+
+                    Plotly.relayout(
+
+                        'candlestickChart',
+
+                        {
+
+                            shapes:[
+
+                                {
+
+                                    type:'line',
+
+                                    x0:`${year}-01-01`,
+
+                                    x1:`${year}-01-01`,
+
+                                    y0:0,
+
+                                    y1:1,
+
+                                    yref:'paper',
+
+                                    line:{
+
+                                        color:'#00E5FF',
+
+                                        width:3,
+
+                                        dash:'dashdot'
+                                    }
+                                }
+                            ],
+
+                            annotations:[
+
+                                {
+
+                                    x:`${year}-01-01`,
+
+                                    y:1,
+
+                                    yref:'paper',
+
+                                    text:`Año ${year}`,
+
+                                    showarrow:true,
+
+                                    arrowcolor:'#00E5FF',
+
+                                    font:{
+
+                                        color:'#00E5FF',
+
+                                        size:14
+                                    }
+                                }
+                            ]
+                        }
+                    );
+                }
+
+                // ==========================================
+                // ÉPOCAS
+                // ==========================================
+
+                const subprime = [];
+
+                const recuperacion = [];
+
+                const pandemia = [];
+
+                for(let i = 1; i < datosLimpios.length; i++){
+
+                    const year =
+
+                    new Date(
+                        datosLimpios[i].Date
+                    ).getFullYear();
+
+                    const rendimiento =
+
+                    (
+                        (
+                            close[i] - close[i - 1]
+                        )
+
+                        / close[i - 1]
+                    ) * 100;
+
+                    if(year >= 2004 && year <= 2011){
+
+                        subprime.push(rendimiento);
+                    }
+
+                    else if(year >= 2012 && year <= 2019){
+
+                        recuperacion.push(rendimiento);
+                    }
+
+                    else if(year >= 2020){
+
+                        pandemia.push(rendimiento);
+                    }
+                }
+
+                // ==========================================
+                // BOXPLOT
+                // ==========================================
+
+                Plotly.newPlot(
+
+                    'graficaBoxplot',
+
+                    [
+
+                        {
+
+                            y: subprime,
+
+                            type:'box',
+
+                            name:'Subprime',
+
+                            marker:{
+                                color:'#6EA8FE'
+                            }
+                        },
+
+                        {
+
+                            y: recuperacion,
+
+                            type:'box',
+
+                            name:'Recuperación',
+
+                            marker:{
+                                color:'#FFD166'
+                            }
+                        },
+
+                        {
+
+                            y: pandemia,
+
+                            type:'box',
+
+                            name:'Pandemia',
+
+                            marker:{
+                                color:'#FF6B6B'
+                            }
+                        }
+
+                    ],
+
+                    {
+
+                        title:'Distribución de Rendimientos por Época',
+
+                        paper_bgcolor:'#1a2436',
+
+                        plot_bgcolor:'#1a2436',
+
+                        font:{
+                            color:'white'
+                        }
+                    }
+                );
+
+                // ==========================================
+                // HISTOGRAMA
+                // ==========================================
+
+                const media =
+
+                rendimientos.reduce(
+                    (a,b) => a+b , 0
+                ) / rendimientos.length;
+
+                Plotly.newPlot(
+
+                    'graficaHistograma',
+
+                    [
+
+                        {
+
+                            x: rendimientos,
+
+                            type:'histogram',
+
+                            nbinsx:30,
+
+                            marker:{
+                                color:'#5DADE2'
+                            }
+                        },
+
+                        {
+
+                            x:[media,media],
+
+                            y:[0,25],
+
+                            mode:'lines',
+
+                            name:'Media',
+
+                            line:{
+
+                                color:'gold',
+
+                                width:3,
+
+                                dash:'dash'
+                            }
+                        }
+
+                    ],
+
+                    {
+
+                        title:'Campana de Distribución',
+
+                        paper_bgcolor:'#1a2436',
+
+                        plot_bgcolor:'#1a2436',
+
+                        font:{
+                            color:'white'
+                        }
+                    }
+                );
+
+                // ==========================================
+                // CORRELACIÓN
+                // ==========================================
+
+                function correlacion(x, y){
+
+                    const n = x.length;
+
+                    const promedioX =
+                    x.reduce((a,b)=>a+b,0)/n;
+
+                    const promedioY =
+                    y.reduce((a,b)=>a+b,0)/n;
+
+                    let numerador = 0;
+
+                    let denominadorX = 0;
+
+                    let denominadorY = 0;
+
+                    for(let i = 0; i < n; i++){
+
+                        numerador +=
+                        (x[i]-promedioX)
+                        *
+                        (y[i]-promedioY);
+
+                        denominadorX +=
+                        Math.pow(x[i]-promedioX,2);
+
+                        denominadorY +=
+                        Math.pow(y[i]-promedioY,2);
+                    }
+
+                    return numerador /
+
+                    Math.sqrt(
+                        denominadorX * denominadorY
+                    );
+                }
+
+                const datosCorrelacion = [
+
+                    open.slice(1),
+
+                    high.slice(1),
+
+                    low.slice(1),
+
+                    close.slice(1),
+
+                    volume.slice(1),
+
+                    volatilidad.slice(1),
+
+                    rendimientos
+                ];
+
+                const nombres = [
+
+                    'Open',
+
+                    'High',
+
+                    'Low',
+
+                    'Close',
+
+                    'Volume',
+
+                    'Volatilidad',
+
+                    'Rendimiento_%'
+                ];
+
+                const matriz = [];
+
+                for(let i = 0; i < datosCorrelacion.length; i++){
+
+                    const fila = [];
+
+                    for(let j = 0; j < datosCorrelacion.length; j++){
+
+                        fila.push(
+
+                            correlacion(
+
+                                datosCorrelacion[i],
+
+                                datosCorrelacion[j]
+
+                            ).toFixed(2)
+                        );
+                    }
+
+                    matriz.push(fila);
+                }
+
+                Plotly.newPlot(
+
+                    'graficaCorrelacion',
+
+                    [
+
+                        {
+
+                            z: matriz,
+
+                            x: nombres,
+
+                            y: nombres,
+
+                            type:'heatmap',
+
+                            colorscale:'Viridis',
+
+                            text: matriz,
+
+                            texttemplate:'%{text}',
+
+                            textfont:{
+
+                                color:'white',
+
+                                size:16
+                            }
+                        }
+
+                    ],
+
+                    {
+
+                        title:'Matriz de Correlación',
+
+                        paper_bgcolor:'#1a2436',
+
+                        plot_bgcolor:'#1a2436',
+
+                        font:{
+                            color:'white'
+                        }
+                    }
+                );
+
+                // ==========================================
+                // DRAWDOWN
+                // ==========================================
+
+                const drawdown = [];
+
+                let maxHistorico = close[0];
+
+                for(let i = 0; i < close.length; i++){
+
+                    if(close[i] > maxHistorico){
+
+                        maxHistorico = close[i];
+                    }
+
+                    const dd =
+
+                    (
+                        (
+                            close[i] - maxHistorico
+                        )
+
+                        / maxHistorico
+                    ) * 100;
+
+                    drawdown.push(dd);
+                }
+
+                Plotly.newPlot(
+
+                    'graficaDrawdown',
+
+                    [
+
+                        {
+
+                            x: fechas,
+
+                            y: drawdown,
+
+                            type:'scatter',
+
+                            mode:'lines',
+
+                            fill:'tozeroy',
+
+                            fillcolor:'rgba(255,77,77,0.25)',
+
+                            line:{
+
+                                color:'#ff4d4d',
+
+                                width:2
+                            }
+                        }
+
+                    ],
+
+                    {
+
+                        title:'Análisis de Drawdown',
+
+                        paper_bgcolor:'#1a2436',
+
+                        plot_bgcolor:'#1a2436',
+
+                        font:{
+                            color:'white'
+                        }
+                    }
+                );
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
